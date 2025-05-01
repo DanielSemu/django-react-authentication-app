@@ -12,7 +12,7 @@ export const refreshToken = async () => {
 
     isRefreshing = true;
     try {
-        const response = await axios.post(`${BASE_URL}/auth/token/refresh/`, {}, { withCredentials: true });
+        const response = await axios.post(`${BASE_URL}/api/auth/token/refresh/`, {}, { withCredentials: true });
         const newAccessToken = response.data.access;
         setAccessToken(newAccessToken);
 
