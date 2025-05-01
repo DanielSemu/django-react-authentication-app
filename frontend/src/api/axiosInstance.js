@@ -1,51 +1,61 @@
-import axios from "axios";
+import axios from 'axios';
 
-const BASE_URL = "http://localhost:8000"; // your Django backend URL
-import useAuth from "../auth/useAuth";
-import useRefreshToken from "../hooks/useRefreshToken";
+import { getAccessToken, setAccessToken } from '../auth/tokenStorage';
+// export const BASE_URL = 'http://localhost:8000';
+// export const BASE_URL = 'http://192.168.75.222:8000';
+export const BASE_URL = 'http://localhost:8000';
 
+import { refreshToken } from './auth';
+
+export const refreshAxiosInstance = axios.create({
+    baseURL: BASE_URL,
+});
 
 const axiosInstance = axios.create({
     baseURL: BASE_URL,
-    withCredentials: true, // send httpOnly cookies
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  
-  export default axiosInstance;
-  
-
-const axiosPrivate = axios.create({
-  baseURL: BASE_URL,
-  withCredentials: true,
+    withCredentials: true, // Ensures cookies are sent with each request
+});
+export const loginAxiosInstance = axios.create({
+    baseURL: BASE_URL,
+    withCredentials: true, // Ensures cookies are sent with each request
 });
 
-const setupInterceptors = (store) => {
-  axiosPrivate.interceptors.request.use(
+// Request interceptor to include the access token in headers
+axiosInstance.interceptors.request.use(
     (config) => {
-      if (store.auth?.accessToken) {
-        config.headers["Authorization"] = `Bearer ${store.auth.accessToken}`;
-      }
-      return config;
+        const token = getAccessToken();
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
     },
     (error) => Promise.reject(error)
-  );
+);
 
-  axiosPrivate.interceptors.response.use(
+// Response interceptor to handle 401 error and refresh token
+axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
-      const prevRequest = error.config;
-      if (error.response?.status === 401 && !prevRequest._retry) {
-        prevRequest._retry = true;
-        const newAccessToken = await store.refresh();
-        prevRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
-        return axiosPrivate(prevRequest);
-      }
-      return Promise.reject(error);
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+            try {
+                const newAccessToken = await refreshToken();
+                if (newAccessToken) {
+                    setAccessToken(newAccessToken);
+                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                    return axiosInstance(originalRequest); // Retry original request
+                }
+            } catch (refreshError) {
+                console.error('Token refresh failed:', refreshError);
+                // alert("sfds")
+                // window.location.href = '/login'; // Redirect to login page
+            }
+        }
+
+        return Promise.reject(error);
     }
-  );
-};
+);
 
-export { axiosPrivate, setupInterceptors };
-
+export default axiosInstance;

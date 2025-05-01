@@ -5,6 +5,7 @@ import AdminPage from "../pages/AdminPage";
 import Unauthorized from "../pages/Unauthorized";
 import RequireAuth from "../auth/RequireAuth";
 import RequireRole from "../auth/RequireRole";
+import AboutPage from "../pages/AboutPage";
 
 const AppRoutes = () => {
   return (
@@ -15,6 +16,7 @@ const AppRoutes = () => {
       {/* Protected routes */}
       <Route element={<RequireAuth />}>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/about" element={<AboutPage />} />
         
         <Route element={<RequireRole allowedRoles={["admin"]} />}>
           <Route path="/admin" element={<AdminPage />} />

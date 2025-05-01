@@ -1,27 +1,19 @@
-import { BrowserRouter } from "react-router-dom";
+
 import AppRoutes from "./routes/AppRoutes";
-import { AuthProvider } from "./auth/AuthContext";
-import { setupInterceptors } from "./api/axiosInstance";
-import useAuth from "./auth/useAuth";
-import useRefreshToken from "./hooks/useRefreshToken";
+import { Routes, Route } from "react-router-dom";
 
-function App() {
-  const auth = useAuth();
-  const refresh = useRefreshToken();
-
-  setupInterceptors({ auth, refresh });
-
+const App = () => {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <>
+      
+         <Routes>
+            
+            {/* <Route path="/login" element={<Login/>}/> */}
+            <Route path="/*" element={<AppRoutes/>}/>
+         </Routes>
+  
+    </>
   );
-}
+};
 
-export default function AppWithProvider() {
-  return (
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  );
-}
+export default App;

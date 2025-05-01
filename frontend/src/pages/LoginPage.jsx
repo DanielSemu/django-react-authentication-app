@@ -2,14 +2,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import useAuth from "../auth/useAuth";
+import { setAccessToken } from "../auth/tokenStorage";
 
 const LoginPage = () => {
-  const { setAuth } = useAuth();
+  const { setAuth,auth } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -18,8 +18,12 @@ const LoginPage = () => {
         email,
         password,
       });
+      console.log(res);
+      
+      
+      setAccessToken(res.data.access)
 
-      setAuth({ user: res.data.user, accessToken: res.data.accessToken });
+      setAuth({ user: res.data.user});
       navigate("/", { replace: true });
     } catch (err) {
       setError("Invalid Credentials");

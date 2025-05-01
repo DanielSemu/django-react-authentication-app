@@ -1,10 +1,14 @@
 import useAuth from "../auth/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
+import { getAccessToken } from "../auth/tokenStorage";
 
 const Dashboard = () => {
   const { auth, setAuth } = useAuth();
   const navigate = useNavigate();
+  const access=getAccessToken()
+  console.log(access);
+  
 
   const handleLogout = async () => {
     try {
@@ -21,6 +25,8 @@ const Dashboard = () => {
       <h1>Dashboard</h1>
       <h2>Welcome, {auth.user?.full_name}!</h2>
       <p>Your role: {auth.user?.role}</p>
+      <p> this is access {access}</p>
+      <Link to='/about'>About Page</Link>
       <button onClick={handleLogout}>Logout</button>
     </div>
   );

@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status,permissions
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken,TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth import authenticate
 from .models import CustomUser
@@ -55,25 +55,34 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             )
 
 class CustomTokenRefreshView(TokenRefreshView):
-    def post(self,request, *args, **kwargs):
-        refresh_token=request.COOKIES.get('refresh_token')
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.COOKIES.get('refresh_token')
 
         if not refresh_token:
-            return Response({'error':'No refresh token found'}, status=400)
-        # inject the refresh token into the request data
-        request.data['refresh']=refresh_token
+            return Response({'error': 'No refresh token found'}, status=400)
 
-        # call the parent method to refresh the access token
-        response=super().post(request, *args , **kwargs)
+        try:
+            token = RefreshToken(refresh_token)
+            access_token = str(token.access_token)
+            user_id = token['user_id']  # From the refresh token's payload
 
-        # only send the new access token without user information
+            # Get user and serialize
+            user = User.objects.get(id=user_id)
+            user_data = UserSerializer(user).data
 
-        if response.status_code == 200:
             return Response({
-                'access':response.data['access']
+                'access': access_token,
+                'user': user_data,
+                'message': 'Token refreshed successfully.'
             })
-        return response
 
+        except TokenError:
+            return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': 'An error occurred while refreshing token.'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class ProfileView(APIView):
     permission_classes=[permissions.IsAuthenticated]
